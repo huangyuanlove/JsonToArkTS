@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.huangyuanlove.jsontoarkts.action.ui.UserInputEditor;
+import com.huangyuanlove.jsontoarkts.action.util.ArkTSGenerator;
+import com.huangyuanlove.jsontoarkts.action.util.DefaultProp;
 import com.huangyuanlove.jsontoarkts.action.util.NotificationUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.json.JsonLanguage;
@@ -17,26 +19,22 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.IOException;
 
 public class CodeGenerateAction extends AnAction {
 
     boolean withTrace = true;
-
+    DefaultProp defaultProp = DefaultProp.nullable;
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+        return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -71,28 +69,37 @@ public class CodeGenerateAction extends AnAction {
 
             JPanel mainPanel = new JPanel(new BorderLayout());
             UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
-            mainPanel.add(new JScrollPane(userInputEditor), BorderLayout.CENTER);
+
+            userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
+
+            JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
+
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
             mDialog.add(mainPanel, BorderLayout.CENTER);
 
 
             Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
-            String inputJsonString = userInputEditor.getText();
-
 
 
             JPanel bottomPanel = new JPanel();
             bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
 
 
-            JPanel optionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            JPanel classNamePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             JLabel classNameLabel = new JLabel("class name");
             JTextField classNameField = new JTextField(20);
             classNameField.setText(fileName);
-            optionPanel.add(classNameLabel);
-            optionPanel.add(classNameField);
+            classNamePanel.add(classNameLabel);
+            classNamePanel.add(classNameField);
 
+            bottomPanel.add(classNamePanel);
+
+
+
+            JPanel optionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
             JCheckBox autoTraceCheckBox = new JCheckBox("with @Trace");
+
             autoTraceCheckBox.setSelected(true);
 
             autoTraceCheckBox.addItemListener(new ItemListener() {
@@ -107,8 +114,34 @@ public class CodeGenerateAction extends AnAction {
             });
             optionPanel.add(autoTraceCheckBox);
 
-            bottomPanel.add(optionPanel);
 
+            JRadioButton nullable = new JRadioButton("with nullable");
+            nullable.setSelected(true);
+            nullable.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if(e.getStateChange() == ItemEvent.SELECTED){
+                        defaultProp = DefaultProp.nullable;
+                    }
+                }
+            });
+
+            JRadioButton defaultValue = new JRadioButton("with default value");
+            defaultValue.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if(e.getStateChange() == ItemEvent.SELECTED){
+                        defaultProp = DefaultProp.defaultValue;
+                    }
+                }
+            });
+            ButtonGroup propValueGroup = new ButtonGroup();
+            propValueGroup.add(nullable);
+            propValueGroup.add(defaultValue);
+
+            optionPanel.add(nullable);
+            optionPanel.add(defaultValue);
+            bottomPanel.add(optionPanel);
 
 
 
@@ -116,38 +149,52 @@ public class CodeGenerateAction extends AnAction {
 
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             JButton generateButton = new JButton("Generate");
+            String finalFileName = fileName;
+
             generateButton.addActionListener(e -> {
 
                 try {
                     //检查一下Json字符串是否合法
+                    String inputJsonString = userInputEditor.getText();
                     JsonElement root = JsonParser.parseString(inputJsonString);
                     if(root!=null){
-                        ProgressManager.getInstance().run(new Task.Backgroundable(project, "JsonToArkTS plugin", false) {
-                            @Override
-                            public void run(@NotNull ProgressIndicator indicator) {
-                                try {
-                                    
-                                    new ArkTSGenerator().generateFromJsonByDocument(json, event, finalRootName, parseType, generateSetGet);
-                                   
-                                    NotificationUtil.showErrorNotification(project, "done");
-                                } catch (Exception e) {
-                                    if (e instanceof IOException) {
-                                        messageDelegate.catchException(new FileIOException(), event);
-                                    } else {
-                                        messageDelegate.catchException(e, event);
-                                    }
-                                } finally {
-                                    indicator.stop();
-                                    if (event.getProject() != null) {
-                                        ProjectView.getInstance(event.getProject()).refresh();
-                                    }
-                                    VirtualFile data = event.getData(LangDataKeys.VIRTUAL_FILE);
-                                    if (data != null) {
-                                        data.refresh(false, true);
-                                    }
-                                }
-                            }
-                        });
+//                        ProgressManager.getInstance().run(new Task.Backgroundable(project, "JsonToArkTS plugin", false) {
+//                            @Override
+//                            public void run(@NotNull ProgressIndicator indicator) {
+//                                try {
+//
+//                                    new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
+//
+//                                    NotificationUtil.showInfoNotification(project, "done");
+//                                    mDialog.setVisible(false);
+//                                } catch (Exception e) {
+//                                    NotificationUtil.showErrorNotification(project, e.getMessage());
+//                                } finally {
+//                                    indicator.stop();
+//                                    if (event.getProject() != null) {
+//                                        ProjectView.getInstance(event.getProject()).refresh();
+//                                    }
+//                                    VirtualFile data = event.getData(LangDataKeys.VIRTUAL_FILE);
+//                                    if (data != null) {
+//                                        data.refresh(false, true);
+//                                    }
+//                                }
+//                            }
+//                        });
+
+
+                        new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
+
+                        NotificationUtil.showInfoNotification(project, "done");
+                        mDialog.setVisible(false);
+                        if (event.getProject() != null) {
+                            ProjectView.getInstance(event.getProject()).refresh();
+                        }
+                        VirtualFile data = event.getData(LangDataKeys.VIRTUAL_FILE);
+                        if (data != null) {
+                            data.refresh(false, true);
+                        }
+
                     }
 
                 }catch (Exception e1) {
@@ -160,8 +207,10 @@ public class CodeGenerateAction extends AnAction {
             formatButton.addActionListener(e -> {
 
                 try {
+                    String inputJsonString = userInputEditor.getText();
                     JsonElement root = JsonParser.parseString(inputJsonString);
-                    userInputEditor.setText(gson.toJson(root));
+                    String result = gson.toJson(root);
+                    userInputEditor.setText(result);
 
                 }catch (Exception e1) {
                     NotificationUtil.showErrorNotification(project, e1.getMessage());
