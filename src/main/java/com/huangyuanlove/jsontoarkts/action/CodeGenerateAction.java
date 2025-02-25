@@ -13,9 +13,6 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +28,7 @@ public class CodeGenerateAction extends AnAction {
 
     boolean withTrace = true;
     DefaultProp defaultProp = DefaultProp.nullable;
-
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
@@ -65,24 +62,19 @@ public class CodeGenerateAction extends AnAction {
 
             JFrame mDialog = new JFrame();
             mDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            mDialog.setTitle(fileName);
+            mDialog.setTitle("JsonToArkTS");
 
-            JPanel mainPanel = new JPanel(new BorderLayout());
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
             UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
 
             userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
 
             JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
 
-            mainPanel.add(scrollPane, BorderLayout.CENTER);
-            mDialog.add(mainPanel, BorderLayout.CENTER);
+            mainPanel.add(scrollPane);
+            mDialog.add(mainPanel);
 
-
-            Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
-
-
-            JPanel bottomPanel = new JPanel();
-            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
 
 
             JPanel classNamePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
@@ -92,7 +84,7 @@ public class CodeGenerateAction extends AnAction {
             classNamePanel.add(classNameLabel);
             classNamePanel.add(classNameField);
 
-            bottomPanel.add(classNamePanel);
+            mainPanel.add(classNamePanel);
 
 
 
@@ -141,10 +133,7 @@ public class CodeGenerateAction extends AnAction {
 
             optionPanel.add(nullable);
             optionPanel.add(defaultValue);
-            bottomPanel.add(optionPanel);
-
-
-
+            mainPanel.add(optionPanel);
 
 
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
@@ -158,30 +147,6 @@ public class CodeGenerateAction extends AnAction {
                     String inputJsonString = userInputEditor.getText();
                     JsonElement root = JsonParser.parseString(inputJsonString);
                     if(root!=null){
-//                        ProgressManager.getInstance().run(new Task.Backgroundable(project, "JsonToArkTS plugin", false) {
-//                            @Override
-//                            public void run(@NotNull ProgressIndicator indicator) {
-//                                try {
-//
-//                                    new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
-//
-//                                    NotificationUtil.showInfoNotification(project, "done");
-//                                    mDialog.setVisible(false);
-//                                } catch (Exception e) {
-//                                    NotificationUtil.showErrorNotification(project, e.getMessage());
-//                                } finally {
-//                                    indicator.stop();
-//                                    if (event.getProject() != null) {
-//                                        ProjectView.getInstance(event.getProject()).refresh();
-//                                    }
-//                                    VirtualFile data = event.getData(LangDataKeys.VIRTUAL_FILE);
-//                                    if (data != null) {
-//                                        data.refresh(false, true);
-//                                    }
-//                                }
-//                            }
-//                        });
-
 
                         new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
 
@@ -220,16 +185,11 @@ public class CodeGenerateAction extends AnAction {
             actionPanel.add(generateButton);
             actionPanel.add(formatButton);
 
-            bottomPanel.add(actionPanel);
-
-
-            mDialog.add(bottomPanel, BorderLayout.SOUTH);
+            mainPanel.add(actionPanel);
 
             mDialog.pack();
             mDialog.setLocationRelativeTo(null);
             mDialog.setVisible(true);
-
-
         }
 
     }
