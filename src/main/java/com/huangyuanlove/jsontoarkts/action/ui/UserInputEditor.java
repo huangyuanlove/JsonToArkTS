@@ -20,6 +20,7 @@ public class UserInputEditor extends LanguageTextField {
         editorEx.setVerticalScrollbarVisible(true);
         editorEx.setHorizontalScrollbarVisible(true);
         editorEx.setPlaceholder("Enter JSON");
+        editorEx.setOneLineMode(false);
 
         EditorSettings settings = editorEx.getSettings();
         settings.setLineNumbersShown(true);

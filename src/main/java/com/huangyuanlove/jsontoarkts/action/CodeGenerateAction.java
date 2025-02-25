@@ -86,7 +86,6 @@ public class CodeGenerateAction extends AnAction {
             userInputEditor.setSize(new Dimension(500, 500));
             userInputEditor.setMaximumSize(new Dimension(500, 500));
             userInputEditor.setPreferredSize(new Dimension(500, 500));
-
             JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
             scrollPane.setPreferredSize(new Dimension(500, 500));
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
