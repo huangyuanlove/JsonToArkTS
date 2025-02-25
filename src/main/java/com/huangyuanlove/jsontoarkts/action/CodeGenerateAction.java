@@ -13,9 +13,13 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,10 +46,18 @@ public class CodeGenerateAction extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
+
+
+
+
+
         Project project = event.getData(PlatformDataKeys.PROJECT);
         if (project == null) {
             return;
         }
+
+
+
         DumbService dumbService = DumbService.getInstance(project);
         if (dumbService.isDumb()) {
             dumbService.showDumbModeNotification("JsonToArkTS plugin is not available during indexing");
@@ -63,17 +75,25 @@ public class CodeGenerateAction extends AnAction {
 
             //弹窗主体
             JFrame mDialog = new JFrame();
+            mDialog.setLayout(new BorderLayout());
+            mDialog.setSize(new Dimension(500,750));
             mDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             mDialog.setTitle("JsonToArkTS");
 
-            //输入框容器，使得输入框可滑动
-            JPanel mainPanel = new JPanel(new BorderLayout());
-            UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
-            userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
-            JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
-            mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-            mDialog.add(mainPanel, BorderLayout.CENTER);
+            //输入框容器，使得输入框可滑动
+            UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
+            userInputEditor.setSize(new Dimension(500, 500));
+            userInputEditor.setMaximumSize(new Dimension(500, 500));
+            userInputEditor.setPreferredSize(new Dimension(500, 500));
+
+            JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
+            scrollPane.setPreferredSize(new Dimension(500, 500));
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+
+            mDialog.add(scrollPane, BorderLayout.CENTER);
+
 
 
             //底部功能区主体
@@ -183,6 +203,11 @@ public class CodeGenerateAction extends AnAction {
                     JsonElement root = JsonParser.parseString(inputJsonString);
                     String result = gson.toJson(root);
                     userInputEditor.setText(result);
+                    JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+                    verticalScrollBar.setValue(verticalScrollBar.getMaximum());
+
+                    JScrollBar horizontalScrollBar = scrollPane.getHorizontalScrollBar();
+                    horizontalScrollBar.setValue(0);
 
                 }catch (Exception e1) {
                     NotificationUtil.showErrorNotification(project, e1.getMessage());

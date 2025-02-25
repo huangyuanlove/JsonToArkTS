@@ -17,16 +17,18 @@ public class UserInputEditor extends LanguageTextField {
     @Override
     protected @NotNull EditorEx createEditor() {
         EditorEx editorEx = super.createEditor();
-
         editorEx.setVerticalScrollbarVisible(true);
         editorEx.setHorizontalScrollbarVisible(true);
         editorEx.setPlaceholder("Enter JSON");
+
         EditorSettings settings = editorEx.getSettings();
         settings.setLineNumbersShown(true);
         settings.setAllowSingleLogicalLineFolding(true);
         settings.setAutoCodeFoldingEnabled(true);
         settings.setFoldingOutlineShown(true);
         settings.setRightMarginShown(true);
+
+
         return editorEx;
     }
 }

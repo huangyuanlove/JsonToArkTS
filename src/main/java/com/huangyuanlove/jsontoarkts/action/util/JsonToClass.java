@@ -10,22 +10,21 @@ import java.util.Map;
 import java.util.Set;
 
 public class JsonToClass {
-
-   private HashMap<String, HashMap<String, String>> classMap = new HashMap<>();
+    private HashMap<String, HashMap<String, String>> classMap = new HashMap<>();
     private boolean withTrace;
-    private DefaultProp defaultProp;
+    private DefaultProp defaultProp = DefaultProp.nullable;
 
     public JsonToClass(boolean withTrace, DefaultProp defaultProp) {
         this.withTrace = withTrace;
         this.defaultProp = defaultProp;
     }
 
-    public  void visitRoot(JsonElement root, String className) {
+    public void visitRoot(JsonElement root, String className) {
         if (root.isJsonObject()) {
             visitObject(root.getAsJsonObject(), className);
 
         } else if (root.isJsonArray()) {
-            visitArray(root.getAsJsonArray(), className,null);
+            visitArray(root.getAsJsonArray(), className, null);
 
         } else if (root.isJsonNull()) {
 
@@ -39,6 +38,7 @@ public class JsonToClass {
         className = className.substring(0, 1).toUpperCase() + className.substring(1);
         return toCamelCase(className);
     }
+
     private String toCamelCase(String name) {
         StringBuilder result = new StringBuilder();
         boolean nextUpper = false;
@@ -61,7 +61,7 @@ public class JsonToClass {
     }
 
     private HashMap<String, String> getClassPropMap(String className) {
-        className =getClassNameWithCamelcase(className);
+        className = getClassNameWithCamelcase(className);
         if (classMap.containsKey(className)) {
             return classMap.get(className);
         } else {
@@ -70,7 +70,8 @@ public class JsonToClass {
             return propMap;
         }
     }
-    private String getJsonPrimitive(JsonPrimitive jsonPrimitive){
+
+    private String getJsonPrimitive(JsonPrimitive jsonPrimitive) {
         String propType = "Object";
         if (jsonPrimitive.isBoolean()) {
             propType = "boolean";
@@ -84,6 +85,10 @@ public class JsonToClass {
 
     private void visitObject(JsonObject jsonObject, String className) {
         Set<Map.Entry<String, JsonElement>> entrySet = jsonObject.entrySet();
+        if(entrySet.size() ==0){
+            getClassPropMap(getClassNameWithCamelcase(className));
+            return ;
+        }
         entrySet.forEach(entry -> {
             System.out.println(entry.getKey() + " : " + entry.getValue() + " in " + className);
             HashMap<String, String> propMap = getClassPropMap(className);
@@ -102,7 +107,6 @@ public class JsonToClass {
             }
 
 
-
             JsonElement jsonElement = entry.getValue();
             if (jsonElement.isJsonObject()) {
                 visitObject(jsonElement.getAsJsonObject(), entry.getKey());
@@ -114,9 +118,7 @@ public class JsonToClass {
             } else if (jsonElement.isJsonNull()) {
 
 
-
             } else if (jsonElement.isJsonPrimitive()) {
-
 
 
             }
@@ -124,20 +126,27 @@ public class JsonToClass {
     }
 
     private void visitArray(JsonArray jsonArray, String className, String propName) {
+
+        if(jsonArray.size() == 0){
+            getClassPropMap(className).put(propName, getClassNameWithCamelcase(propName) + "[]");
+            getClassPropMap(getClassNameWithCamelcase(propName));
+            return;
+        }
+
         jsonArray.forEach(jsonElement -> {
             if (jsonElement.isJsonObject()) {
 
-                getClassPropMap(className).put(propName, getClassNameWithCamelcase(propName) +"[]");
+                getClassPropMap(className).put(propName, getClassNameWithCamelcase(propName) + "[]");
 
                 visitObject(jsonElement.getAsJsonObject(), propName);
 
             } else if (jsonElement.isJsonArray()) {
-                visitArray(jsonElement.getAsJsonArray(), className,propName);
+                visitArray(jsonElement.getAsJsonArray(), className, propName);
             } else if (jsonElement.isJsonNull()) {
 
             } else if (jsonElement.isJsonPrimitive()) {
 
-                getClassPropMap(className).put(propName, getJsonPrimitive(jsonElement.getAsJsonPrimitive()) +"[]");
+                getClassPropMap(className).put(propName, getJsonPrimitive(jsonElement.getAsJsonPrimitive()) + "[]");
 
 
             }
@@ -147,59 +156,52 @@ public class JsonToClass {
     }
 
 
+    public String toCode() {
 
 
+        StringBuffer result = new StringBuffer();
+        classMap.forEach((k, v) -> {
+            if (withTrace) {
+                result.append("@ObservedV2").append("\n");
+            }
 
-    public String toCode(){
+            result.append("export class ").append(k).append("{\n");
 
+            v.forEach((propName, propType) -> {
+                result.append("\t");
+                if (withTrace) {
+                    result.append("@Trace ");
+                }
+                result.append(propName);
+                if (defaultProp == DefaultProp.defaultValue) {
+                    result.append(":").append(propType);
+                    if ("string".equals(propType)) {
+                        result.append(" = \"").append("\"");
+                    } else if ("boolean".equals(propType)) {
+                        result.append(" = false");
 
-
-         StringBuffer result = new StringBuffer();
-         classMap.forEach((k, v) -> {
-             if(withTrace){
-                 result.append( "@ObservedV2" ).append("\n");
-             }
-
-             result .append("export class ").append( k ).append("{\n");
-
-             v.forEach((propName,propType)->{
-                 result.append("\t");
-                 if(withTrace){
-                     result.append("@Trace ");
-                 }
-                 result.append(propName);
-                 if(defaultProp == DefaultProp.defaultValue){
-                     result.append(":").append(propType);
-                     if("string".equals(propType) ){
-                         result.append(" = \"").append("\"");
-                     }else if("boolean".equals(propType) ){
-                         result.append(" = false");
-
-                     }else if("number".equals(propType) ){
-                         result.append(" = 0");
-                     }else if(propType.indexOf("[]")>0 ){
-                         result.append(" = []");
-                     }else {
-                         result.append(" = new ").append(propType);
-                     }
+                    } else if ("number".equals(propType)) {
+                        result.append(" = 0");
+                    } else if (propType.indexOf("[]") > 0) {
+                        result.append(" = []");
+                    } else {
+                        result.append(" = new ").append(propType).append("()");
+                    }
 
 
-                 }else if(defaultProp == DefaultProp.nullable){
-                     result.append("?:");
-                     result.append(propType);
-                 }
+                } else if (defaultProp == DefaultProp.nullable) {
+                    result.append("?:");
+                    result.append(propType);
+                }
 
 
+                result.append("\n");
+            });
 
+            result.append("}\n\n");
 
-                 result.append("\n");
-             });
-
-             result.append("}\n\n");
-
-         });
-         return result.toString();
-     }
-
+        });
+        return result.toString();
+    }
 
 }
