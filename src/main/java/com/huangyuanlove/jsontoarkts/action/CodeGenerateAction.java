@@ -52,31 +52,34 @@ public class CodeGenerateAction extends AnAction {
             return;
         }
 
-        //获取当前所在文件的名字
-        String fileName = null;
+
 
         FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor();
         if (fileEditor != null) {
+            //获取当前所在文件的名字作为默认的类名
+            String fileName = null;
             fileName = fileEditor.getFile().getName();
             fileName = fileName.substring(0, fileName.lastIndexOf("."));
 
+            //弹窗主体
             JFrame mDialog = new JFrame();
             mDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             mDialog.setTitle("JsonToArkTS");
 
-            JPanel mainPanel = new JPanel();
-            mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+            //输入框容器，使得输入框可滑动
+            JPanel mainPanel = new JPanel(new BorderLayout());
             UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
-
             userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
-
             JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
+            mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-            mainPanel.add(scrollPane);
-            mDialog.add(mainPanel);
+            mDialog.add(mainPanel, BorderLayout.CENTER);
 
 
-
+            //底部功能区主体
+            JPanel bottomPanel = new JPanel();
+            bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+            //类名输入框
             JPanel classNamePanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             JLabel classNameLabel = new JLabel("class name");
             JTextField classNameField = new JTextField(20);
@@ -84,16 +87,14 @@ public class CodeGenerateAction extends AnAction {
             classNamePanel.add(classNameLabel);
             classNamePanel.add(classNameField);
 
-            mainPanel.add(classNamePanel);
+            bottomPanel.add(classNamePanel);
 
 
-
+            //生成类的配置选项
             JPanel optionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-
+            //是否对属性添加@Trace注解
             JCheckBox autoTraceCheckBox = new JCheckBox("with @Trace");
-
             autoTraceCheckBox.setSelected(true);
-
             autoTraceCheckBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
@@ -107,6 +108,7 @@ public class CodeGenerateAction extends AnAction {
             optionPanel.add(autoTraceCheckBox);
 
 
+            //属性是否可空
             JRadioButton nullable = new JRadioButton("with nullable");
             nullable.setSelected(true);
             nullable.addItemListener(new ItemListener() {
@@ -118,6 +120,7 @@ public class CodeGenerateAction extends AnAction {
                 }
             });
 
+            //属性是否有默认值
             JRadioButton defaultValue = new JRadioButton("with default value");
             defaultValue.addItemListener(new ItemListener() {
                 @Override
@@ -133,9 +136,12 @@ public class CodeGenerateAction extends AnAction {
 
             optionPanel.add(nullable);
             optionPanel.add(defaultValue);
-            mainPanel.add(optionPanel);
+            bottomPanel.add(optionPanel);
 
 
+
+
+            //生成按钮
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             JButton generateButton = new JButton("Generate");
             String finalFileName = fileName;
@@ -168,6 +174,7 @@ public class CodeGenerateAction extends AnAction {
 
             });
 
+            //格式化按钮,将输入的Json字符串格式化
             JButton formatButton = new JButton("Format");
             formatButton.addActionListener(e -> {
 
@@ -185,11 +192,16 @@ public class CodeGenerateAction extends AnAction {
             actionPanel.add(generateButton);
             actionPanel.add(formatButton);
 
-            mainPanel.add(actionPanel);
+            bottomPanel.add(actionPanel);
+
+
+            mDialog.add(bottomPanel, BorderLayout.SOUTH);
 
             mDialog.pack();
             mDialog.setLocationRelativeTo(null);
             mDialog.setVisible(true);
+
+
         }
 
     }
