@@ -13,13 +13,9 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 

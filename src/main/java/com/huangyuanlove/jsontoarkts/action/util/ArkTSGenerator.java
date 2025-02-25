@@ -1,7 +1,6 @@
 package com.huangyuanlove.jsontoarkts.action.util;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
