@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.huangyuanlove.jsontoarkts.action.GenerateConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,13 +12,12 @@ import java.util.Set;
 
 public class JsonToClass {
 
-   private HashMap<String, HashMap<String, String>> classMap = new HashMap<>();
-    private boolean withTrace;
-    private DefaultProp defaultProp;
+   private final HashMap<String, HashMap<String, String>> classMap = new HashMap<>();
 
-    public JsonToClass(boolean withTrace, DefaultProp defaultProp) {
-        this.withTrace = withTrace;
-        this.defaultProp = defaultProp;
+   private final GenerateConfig generateConfig;
+
+    public JsonToClass(GenerateConfig generateConfig) {
+        this.generateConfig = generateConfig;
     }
 
     public  void visitRoot(JsonElement root, String className) {
@@ -28,9 +28,9 @@ public class JsonToClass {
             visitArray(root.getAsJsonArray(), className,null);
 
         } else if (root.isJsonNull()) {
-
+            //pass
         } else if (root.isJsonPrimitive()) {
-
+            //pass
         }
     }
 
@@ -85,7 +85,6 @@ public class JsonToClass {
     private void visitObject(JsonObject jsonObject, String className) {
         Set<Map.Entry<String, JsonElement>> entrySet = jsonObject.entrySet();
         entrySet.forEach(entry -> {
-            System.out.println(entry.getKey() + " : " + entry.getValue() + " in " + className);
             HashMap<String, String> propMap = getClassPropMap(className);
             String propType = "Object";
 
@@ -106,19 +105,12 @@ public class JsonToClass {
             JsonElement jsonElement = entry.getValue();
             if (jsonElement.isJsonObject()) {
                 visitObject(jsonElement.getAsJsonObject(), entry.getKey());
-
             } else if (jsonElement.isJsonArray()) {
-
                 visitArray(jsonElement.getAsJsonArray(), className, entry.getKey());
-
             } else if (jsonElement.isJsonNull()) {
-
-
-
+                //pass
             } else if (jsonElement.isJsonPrimitive()) {
-
-
-
+                //pass
             }
         });
     }
@@ -156,7 +148,7 @@ public class JsonToClass {
 
          StringBuffer result = new StringBuffer();
          classMap.forEach((k, v) -> {
-             if(withTrace){
+             if(generateConfig.withTrace){
                  result.append( "@ObservedV2" ).append("\n");
              }
 
@@ -164,35 +156,37 @@ public class JsonToClass {
 
              v.forEach((propName,propType)->{
                  result.append("\t");
-                 if(withTrace){
+                 if(generateConfig.withTrace){
                      result.append("@Trace ");
                  }
                  result.append(propName);
-                 if(defaultProp == DefaultProp.defaultValue){
-                     result.append(":").append(propType);
+
+                 if(generateConfig.nullable){
+                     result.append(" ?: ").append(propType);
+                 }else{
+                     result.append(" : ").append(propType);
+                 }
+                 //没有勾选可空，一定需要默认值
+                 if(generateConfig.withDefaultValue || !generateConfig.nullable){
+                     result.append(" = ");
+
+
                      if("string".equals(propType) ){
-                         result.append(" = \"").append("\"");
+                         result.append("\"").append("\"");
                      }else if("boolean".equals(propType) ){
-                         result.append(" = false");
+                         result.append("false");
 
                      }else if("number".equals(propType) ){
-                         result.append(" = 0");
+                         result.append("0");
                      }else if(propType.indexOf("[]")>0 ){
-                         result.append(" = []");
+                         result.append("[]");
                      }else {
-                         result.append(" = new ").append(propType);
+                         result.append("new ").append(propType).append("()");
                      }
 
-
-                 }else if(defaultProp == DefaultProp.nullable){
-                     result.append("?:");
-                     result.append(propType);
                  }
-
-
-
-
                  result.append("\n");
+
              });
 
              result.append("}\n\n");

@@ -6,16 +6,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.huangyuanlove.jsontoarkts.action.ui.UserInputEditor;
 import com.huangyuanlove.jsontoarkts.action.util.ArkTSGenerator;
-import com.huangyuanlove.jsontoarkts.action.util.DefaultProp;
 import com.huangyuanlove.jsontoarkts.action.util.NotificationUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,8 +25,8 @@ import java.awt.event.ItemListener;
 
 public class CodeGenerateAction extends AnAction {
 
-    boolean withTrace = true;
-    DefaultProp defaultProp = DefaultProp.nullable;
+   private final GenerateConfig generateConfig = new GenerateConfig();
+
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -69,7 +65,7 @@ public class CodeGenerateAction extends AnAction {
 
             JPanel mainPanel = new JPanel(new BorderLayout());
             UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
-
+            userInputEditor.setOneLineMode(false);
             userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
 
             JBScrollPane scrollPane = new JBScrollPane(userInputEditor);
@@ -99,45 +95,55 @@ public class CodeGenerateAction extends AnAction {
             JPanel optionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
             JCheckBox autoTraceCheckBox = new JCheckBox("with @Trace");
-
+            generateConfig.withTrace = true;
             autoTraceCheckBox.setSelected(true);
 
             autoTraceCheckBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
                     if(e.getStateChange() == ItemEvent.SELECTED){
-                        withTrace = true;
+                        generateConfig.withTrace = true;
                     }else if(e.getStateChange() == ItemEvent.DESELECTED){
-                        withTrace = false;
+                        generateConfig.withTrace = false;
                     }
                 }
             });
             optionPanel.add(autoTraceCheckBox);
 
 
-            JRadioButton nullable = new JRadioButton("with nullable");
-            nullable.setSelected(true);
-            nullable.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    if(e.getStateChange() == ItemEvent.SELECTED){
-                        defaultProp = DefaultProp.nullable;
-                    }
-                }
-            });
 
-            JRadioButton defaultValue = new JRadioButton("with default value");
+
+            JCheckBox defaultValue = new JCheckBox("with default value");
+            generateConfig.withDefaultValue = true;
+            defaultValue.setSelected(true);
             defaultValue.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
                     if(e.getStateChange() == ItemEvent.SELECTED){
-                        defaultProp = DefaultProp.defaultValue;
+                        generateConfig.withDefaultValue = true;
+                    }else if(e.getStateChange() == ItemEvent.DESELECTED){
+                        generateConfig.withDefaultValue = false;
                     }
                 }
             });
-            ButtonGroup propValueGroup = new ButtonGroup();
-            propValueGroup.add(nullable);
-            propValueGroup.add(defaultValue);
+
+
+            JCheckBox nullable = new JCheckBox("with nullable");
+            nullable.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if(e.getStateChange() == ItemEvent.SELECTED){
+                        generateConfig.nullable = true;
+                    }else if(e.getStateChange() == ItemEvent.DESELECTED){
+                        //不可空则一定有默认值
+                        generateConfig.nullable = false;
+                        defaultValue.setSelected(true);
+
+                    }
+
+                }
+            });
+
 
             optionPanel.add(nullable);
             optionPanel.add(defaultValue);
@@ -158,32 +164,9 @@ public class CodeGenerateAction extends AnAction {
                     String inputJsonString = userInputEditor.getText();
                     JsonElement root = JsonParser.parseString(inputJsonString);
                     if(root!=null){
-//                        ProgressManager.getInstance().run(new Task.Backgroundable(project, "JsonToArkTS plugin", false) {
-//                            @Override
-//                            public void run(@NotNull ProgressIndicator indicator) {
-//                                try {
-//
-//                                    new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
-//
-//                                    NotificationUtil.showInfoNotification(project, "done");
-//                                    mDialog.setVisible(false);
-//                                } catch (Exception e) {
-//                                    NotificationUtil.showErrorNotification(project, e.getMessage());
-//                                } finally {
-//                                    indicator.stop();
-//                                    if (event.getProject() != null) {
-//                                        ProjectView.getInstance(event.getProject()).refresh();
-//                                    }
-//                                    VirtualFile data = event.getData(LangDataKeys.VIRTUAL_FILE);
-//                                    if (data != null) {
-//                                        data.refresh(false, true);
-//                                    }
-//                                }
-//                            }
-//                        });
 
 
-                        new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,withTrace,defaultProp);
+                        new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,generateConfig);
 
                         NotificationUtil.showInfoNotification(project, "done");
                         mDialog.setVisible(false);

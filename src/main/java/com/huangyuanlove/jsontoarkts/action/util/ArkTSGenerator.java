@@ -2,6 +2,7 @@ package com.huangyuanlove.jsontoarkts.action.util;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.huangyuanlove.jsontoarkts.action.GenerateConfig;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -13,13 +14,13 @@ import com.intellij.openapi.project.Project;
 
 public class ArkTSGenerator {
 
-    public void  generateFromJsonByDocument(JsonElement json, AnActionEvent event, String rootName,boolean withTrace,DefaultProp defaultProp) {
+    public void  generateFromJsonByDocument(JsonElement json, AnActionEvent event, String rootName, GenerateConfig generateConfig) {
         Editor editor = event.getData(CommonDataKeys.EDITOR);
         if(editor != null){
             Document document = editor.getDocument();
             Project project = event.getProject();
             WriteCommandAction.runWriteCommandAction(project, () -> {
-                JsonToClass jsonToClass = new JsonToClass(withTrace,defaultProp);
+                JsonToClass jsonToClass = new JsonToClass(generateConfig);
                 jsonToClass.visitRoot(json,rootName);
                 String result = jsonToClass.toCode();
 
