@@ -155,7 +155,7 @@ public class CodeGenerateAction extends AnAction {
 
             JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
             JButton generateButton = new JButton("Generate");
-            String finalFileName = fileName;
+
 
             generateButton.addActionListener(e -> {
 
@@ -164,9 +164,9 @@ public class CodeGenerateAction extends AnAction {
                     String inputJsonString = userInputEditor.getText();
                     JsonElement root = JsonParser.parseString(inputJsonString);
                     if(root!=null){
+                        String finalFileName = classNameField.getText();
 
-
-                        new ArkTSGenerator().generateFromJsonByDocument(root, event, finalFileName,generateConfig);
+                        new ArkTSGenerator().generateFromJsonByDocument(root, event,  finalFileName,generateConfig);
 
                         NotificationUtil.showInfoNotification(project, "done");
                         mDialog.setVisible(false);
