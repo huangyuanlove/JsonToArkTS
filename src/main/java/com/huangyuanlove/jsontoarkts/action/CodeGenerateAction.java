@@ -144,9 +144,29 @@ public class CodeGenerateAction extends AnAction {
                 }
             });
 
+            JCheckBox fromJson = new JCheckBox("with fromJSON");
+            fromJson.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if(e.getStateChange() == ItemEvent.SELECTED){
+                        generateConfig.withFromJson = true;
+                    }else if(e.getStateChange() == ItemEvent.DESELECTED){
+                        //不可空则一定有默认值
+                        generateConfig.withFromJson = false;
+                        defaultValue.setSelected(true);
+
+                    }
+
+                }
+            });
+            fromJson.setSelected(true);
+            optionPanel.add(fromJson);
+
+
 
             optionPanel.add(nullable);
             optionPanel.add(defaultValue);
+            bottomPanel.add(optionPanel);
             bottomPanel.add(optionPanel);
 
 

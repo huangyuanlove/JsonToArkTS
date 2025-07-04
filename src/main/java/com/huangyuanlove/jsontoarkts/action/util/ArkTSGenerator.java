@@ -3,6 +3,7 @@ package com.huangyuanlove.jsontoarkts.action.util;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.huangyuanlove.jsontoarkts.action.GenerateConfig;
+import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -11,6 +12,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 
 public class ArkTSGenerator {
 
@@ -36,6 +40,10 @@ public class ArkTSGenerator {
 
 
             });
+
+            //格式化代码
+            new ReformatCodeAction().actionPerformed(event);
+
         }
     }
 

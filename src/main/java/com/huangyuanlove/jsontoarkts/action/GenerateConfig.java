@@ -4,4 +4,5 @@ public class GenerateConfig {
     public boolean withTrace;
     public boolean nullable;
     public boolean withDefaultValue;
+    public boolean withFromJson;
 }

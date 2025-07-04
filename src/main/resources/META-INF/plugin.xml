@@ -14,11 +14,12 @@
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
     <description><![CDATA[
-    Generate ArkTs model class from json string, auto add @Trace , and nullable,with default value
+    Generate ArkTs model class from json string, auto add @Trace , and nullable,with default value,and fromJSON、fromObject method
   ]]></description>
     <change-notes>
-        1. Supports selecting both default values and nullable options simultaneously.
-        2. Changed the icon, but it's not important.
+        1. Supports selecting both default values and nullable options simultaneously.\n
+        2. Changed the icon, but it's not important.\n
+        3. Supports generate fromJSON、fromObject method
     </change-notes>
 
     <!-- Product and plugin compatibility requirements.
