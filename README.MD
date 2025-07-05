@@ -55,6 +55,65 @@ export class Address{
 }
 ```
 
+### 生成解析方法：fromJSON和fromObject
+勾选了`with fromJSON`后会生成对应的解析方法
+``` ts
+@ObservedV2
+export class Address {
+  @Trace zipCode: number = 0
+  @Trace location: string = ""
+
+  fromJSON(jsonStr: string): Address {
+    let json: Address = JSON.parse(jsonStr) as Address
+    return this.fromObject(json)
+  }
+
+  fromObject(obj: Address): Address {
+    let tmp: Address = new Address()
+    if (obj) {
+      if (obj.zipCode != undefined) {
+        tmp.zipCode = obj.zipCode;
+      }
+      if (obj.location != undefined) {
+        tmp.location = obj.location;
+      }
+    }
+    return tmp
+  }
+}
+
+@ObservedV2
+export class Person {
+  @Trace address: Address = new Address()
+  @Trace name: string = ""
+  @Trace age: number = 0
+
+  fromJSON(jsonStr: string): Person {
+    let json: Person = JSON.parse(jsonStr) as Person
+    return this.fromObject(json)
+  }
+
+  fromObject(obj: Person): Person {
+    let tmp: Person = new Person()
+    if (obj) {
+      if (obj.address != undefined) {
+        tmp.address = new Address().fromObject(obj.address);
+      }
+      if (obj.name != undefined) {
+        tmp.name = obj.name;
+      }
+      if (obj.age != undefined) {
+        tmp.age = obj.age;
+      }
+    }
+    return tmp
+  }
+}
+
+```
+其中`fromJSON`调用了`fromObject`方法，可以认为是一种粗暴的深拷贝。  
+这么做的原因是：ArkTS中想要使得观测能力生效，需要使用`new`关键字创建对象。
+
 ## 需要注意的地方
 
 ### 列表中的元素属性会被合并到同一个类中
