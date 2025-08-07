@@ -4,17 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.huangyuanlove.jsontoarkts.action.ui.UserInputEditor;
 import com.huangyuanlove.jsontoarkts.action.util.ArkTSGenerator;
 import com.huangyuanlove.jsontoarkts.action.util.NotificationUtil;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,10 +64,29 @@ public class CodeGenerateAction extends AnAction {
 
             JFrame mDialog = new JFrame();
             mDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            mDialog.setTitle(fileName);
+            mDialog.setTitle("JsonToArkTS");
 
             JPanel mainPanel = new JPanel(new BorderLayout());
-            UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
+
+            LanguageTextField userInputEditor = new LanguageTextField();
+            userInputEditor.setEnabled(true);
+            ApplicationInfo appInfo = ApplicationInfo.getInstance();
+            String majorVersion = appInfo.getMajorVersion(); // 主版本号（如 "2024"）
+            String minorVersion = appInfo.getMinorVersion(); // 次版本号（如 "1"）
+            String buildNumber = appInfo.getBuild().asString(); // 完整构建号（如 "241.14494.240"）
+
+
+            StringBuffer info = new StringBuffer(String.format("%s.%s (Build %s)", majorVersion, minorVersion, buildNumber));
+
+            BuildNumber build = appInfo.getBuild();
+
+            info.append("\n").append("Base Version: ").append(build.getProductCode());
+            info.append("\n").append("Baseline Version: ").append(build.getBaselineVersion());
+
+
+
+//            UserInputEditor userInputEditor = new UserInputEditor(JsonLanguage.INSTANCE, project, "");
+            userInputEditor.setText(info.toString());
             userInputEditor.setOneLineMode(false);
             userInputEditor.setPreferredSize(new Dimension(userInputEditor.getWidth(), 375)); //
 
@@ -231,6 +253,20 @@ public class CodeGenerateAction extends AnAction {
             mDialog.pack();
             mDialog.setLocationRelativeTo(null);
             mDialog.setVisible(true);
+
+
+            EditorEx editorEx =  userInputEditor.getEditor(true);
+            editorEx.setVerticalScrollbarVisible(true);
+            editorEx.setHorizontalScrollbarVisible(true);
+            editorEx.setPlaceholder("Enter JSON");
+            editorEx.setOneLineMode(false);
+
+            EditorSettings settings = editorEx.getSettings();
+            settings.setLineNumbersShown(true);
+            settings.setAllowSingleLogicalLineFolding(true);
+            settings.setAutoCodeFoldingEnabled(true);
+            settings.setFoldingOutlineShown(true);
+            settings.setRightMarginShown(true);
 
 
         }
